@@ -1,1 +1,297 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Tracker</title>
+<style>
+:root {
+  --bg:#F7E8ED;
+  --white:#FFFFFF;
+  --pink:#D9A6B7;
+  --rose:#B97991;
+  --text:#493A40;
+  --muted:#9B8990;
+  --green:#719B83;
+  --red:#C77D87;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.app {
+  max-width:520px;
+  margin:auto;
+  min-height:100vh;
+  padding:26px 18px 100px;
+}
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:26px;
+}
+.logo { font-size:21px; font-weight:750; letter-spacing:-.7px; }
+.month { color:var(--muted); font-size:13px; margin-top:5px; }
+.avatar {
+  width:42px;height:42px;border-radius:50%;
+  background:#E9C8D3;display:grid;place-items:center;
+  font-size:19px;
+}
+h2 { font-size:19px; margin:24px 0 14px; }
+.balance {
+  background:var(--white);
+  border-radius:25px;
+  padding:23px;
+  box-shadow:0 7px 25px #8e596410;
+}
+.small { font-size:13px;color:var(--muted); }
+.total { font-size:34px;font-weight:750;margin:9px 0 20px;letter-spacing:-1px; }
+.stats { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.stat {
+  background:#FBF5F7;border-radius:17px;padding:14px;
+}
+.stat strong { display:block;font-size:18px;margin-top:7px; }
+.green { color:var(--green); }
+.red { color:var(--red); }
+.actions { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px; }
+button {
+  border:0;border-radius:15px;padding:15px;
+  font-size:14px;font-weight:650;cursor:pointer;
+}
+.income-btn { background:#E5F0E9;color:#527B64; }
+.expense-btn { background:#F6E4E9;color:#A95F73; }
+.section-head { display:flex;justify-content:space-between;align-items:center; }
+.section-head h2 { margin-bottom:12px; }
+.link { color:var(--rose);font-size:13px;cursor:pointer; }
+.card {
+  background:white;border-radius:20px;padding:18px;margin-bottom:12px;
+}
+.empty { text-align:center;color:var(--muted);padding:25px 10px;font-size:14px; }
+.operation {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:13px 0;border-bottom:1px solid #F3E9ED;
+}
+.operation:last-child { border:0; }
+.op-name { font-weight:600;font-size:14px; }
+.op-date { font-size:12px;color:var(--muted);margin-top:5px; }
+.op-amount { font-weight:700; }
+nav {
+  position:fixed;bottom:0;left:0;right:0;
+  background:#FFFFFFF2;backdrop-filter:blur(12px);
+  display:flex;justify-content:space-around;
+  padding:13px 5px calc(13px + env(safe-area-inset-bottom));
+  border-top:1px solid #F0E3E8;
+}
+nav button { background:none;color:var(--muted);padding:7px 9px;font-size:11px; }
+nav button.active { color:var(--rose); }
+.page { display:none; }
+.page.active { display:block; }
+.modal {
+  display:none;position:fixed;inset:0;background:#493A4066;
+  z-index:5;align-items:flex-end;justify-content:center;
+}
+.modal.open { display:flex; }
+.modal-box {
+  width:100%;max-width:520px;background:#FFF;
+  border-radius:25px 25px 0 0;padding:24px 20px 35px;
+}
+.modal-box h2 { margin-top:0; }
+input,select {
+  width:100%;padding:15px;margin:7px 0 14px;
+  border:1px solid #EADDE2;border-radius:13px;
+  background:#FCF9FA;color:var(--text);font-size:16px;
+}
+label { font-size:13px;color:var(--muted); }
+.save {
+  width:100%;background:var(--rose);color:white;margin-top:8px;
+}
+.close { background:#F6EEF1;color:var(--text);width:100%;margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div>
+    <div class="logo">my finances ♡</div>
+    <div class="month" id="monthLabel"></div>
+  </div>
+  <div class="avatar">✿</div>
+</header>
+
+<section class="page active" id="home">
+  <div class="small">Мой финансовый обзор</div>
+  <div class="balance">
+    <div class="small">Остаток за месяц</div>
+    <div class="total" id="balance">0 ₽</div>
+    <div class="stats">
+      <div class="stat">
+        <span class="small">Доходы</span>
+        <strong class="green" id="income">0 ₽</strong>
+      </div>
+      <div class="stat">
+        <span class="small">Расходы</span>
+        <strong class="red" id="expenses">0 ₽</strong>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="income-btn" onclick="openModal('income')">＋ Доход</button>
+    <button class="expense-btn" onclick="openModal('expense')">− Расход</button>
+  </div>
+  <div class="section-head">
+    <h2>Последние операции</h2>
+    <span class="link" onclick="showPage('history')">Все операции</span>
+  </div>
+  <div class="card" id="recent"></div>
+</section>
+
+<section class="page" id="history">
+  <h2>История операций</h2>
+  <div class="card" id="allOperations"></div>
+</section>
+
+<section class="page" id="goals">
+  <h2>Мои накопления</h2>
+  <div class="card">
+    <div class="empty">Здесь будут твои финансовые цели и накопления.</div>
+  </div>
+</section>
+
+<section class="page" id="analytics">
+  <h2>Аналитика</h2>
+  <div class="card">
+    <div class="empty">Здесь появятся графики доходов и расходов.</div>
+  </div>
+</section>
+
+<section class="page" id="settings">
+  <h2>Настройки</h2>
+  <div class="card">
+    <div class="small">Валюта</div>
+    <strong>Российский рубль (₽)</strong>
+  </div>
+</section>
+</div>
+
+<nav>
+  <button class="active" onclick="showPage('home',this)">⌂<br>Главная</button>
+  <button onclick="showPage('history',this)">↕<br>Операции</button>
+  <button onclick="showPage('goals',this)">♡<br>Накопления</button>
+  <button onclick="showPage('analytics',this)">▥<br>Аналитика</button>
+  <button onclick="showPage('settings',this)">⚙<br>Ещё</button>
+</nav>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h2 id="modalTitle">Новая операция</h2>
+    <form id="operationForm">
+      <label>Сумма, ₽</label>
+      <input id="amount" type="number" min="1" step="0.01" placeholder="Например, 5000" required>
+      <label>Категория</label>
+      <select id="category" required></select>
+      <label>Название или комментарий</label>
+      <input id="note" type="text" placeholder="Например, продукты или заказ">
+      <label>Дата</label>
+      <input id="date" type="date" required>
+      <button class="save" type="submit">Сохранить операцию</button>
+      <button class="close" type="button" onclick="closeModal()">Отмена</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const expenseCategories = [
+  "Продукты и питание","Подписки и сервисы","Одежда и покупки",
+  "Обучение","Непредвиденные расходы","Здоровье","Уход за собой",
+  "Подарки и помощь близким","Реклама и рабочие расходы","Другое",
+  "Связь и интернет","Транспорт","Жильё и коммунальные платежи",
+  "Развлечения и отдых"
+];
+const incomeCategories = [
+  "Клиенты","Продажа товаров","Консультации","Обучение","Другое"
+];
+let operations = JSON.parse(localStorage.getItem("financeOperations") || "[]");
+let currentType = "expense";
+const money = n => new Intl.NumberFormat("ru-RU",{
+  maximumFractionDigits:2
+}).format(n) + " ₽";
+const today = new Date();
+document.getElementById("monthLabel").textContent =
+  today.toLocaleDateString("ru-RU",{month:"long",year:"numeric"});
+
+function saveData() {
+  localStorage.setItem("financeOperations",JSON.stringify(operations));
+}
+function openModal(type) {
+  currentType = type;
+  document.getElementById("modalTitle").textContent =
+    type === "income" ? "Новый доход" : "Новый расход";
+  const categories = type === "income" ? incomeCategories : expenseCategories;
+  document.getElementById("category").innerHTML =
+    categories.map(c => `<option>${c}</option>`).join("");
+  document.getElementById("date").value =
+    new Date().toISOString().slice(0,10);
+  document.getElementById("modal").classList.add("open");
+}
+function closeModal() {
+  document.getElementById("modal").classList.remove("open");
+}
+document.getElementById("operationForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const amount = Number(document.getElementById("amount").value);
+  if (!amount || amount <= 0) return;
+  operations.unshift({
+    id:Date.now(),
+    type:currentType,
+    amount,
+    category:document.getElementById("category").value,
+    note:document.getElementById("note").value.trim(),
+    date:document.getElementById("date").value
+  });
+  saveData();
+  e.target.reset();
+  closeModal();
+  render();
+});
+function render() {
+  const month = new Date().toISOString().slice(0,7);
+  const current = operations.filter(o=>o.date.startsWith(month));
+  const inc = current.filter(o=>o.type==="income").reduce((s,o)=>s+o.amount,0);
+  const exp = current.filter(o=>o.type==="expense").reduce((s,o)=>s+o.amount,0);
+  document.getElementById("income").textContent=money(inc);
+  document.getElementById("expenses").textContent=money(exp);
+  document.getElementById("balance").textContent=money(inc-exp);
+  const list = (items) => items.length ? items.map(o=>`
+    <div class="operation">
+      <div>
+        <div class="op-name">${escapeText(o.note || o.category)}</div>
+        <div class="op-date">${escapeText(o.category)} · ${o.date}</div>
+      </div>
+      <div class="op-amount ${o.type==="income"?"green":"red"}">
+        ${o.type==="income"?"+":"−"}${money(o.amount)}
+      </div>
+    </div>`).join("") : '<div class="empty">Операций пока нет.<br>Добавь свой первый доход или расход ♡</div>';
+  document.getElementById("recent").innerHTML=list(operations.slice(0,5));
+  document.getElementById("allOperations").innerHTML=list(operations);
+}
+function escapeText(value) {
+  return String(value).replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function showPage(id,button) {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  if(button) button.classList.add("active");
+}
+render();
+</script>
+</body>
+</html>
+
